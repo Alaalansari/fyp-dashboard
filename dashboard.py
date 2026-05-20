@@ -17,6 +17,12 @@ st.markdown("""
     background: linear-gradient(135deg, #061526 0%, #0A2342 55%, #102B4E 100%);
     color: white;
 }
+div[data-baseweb="select"] > div {
+    color: black !important;
+}
+div[data-baseweb="select"] span {
+    color: black !important;
+}
 
 [data-testid="stHeader"] {
     background: rgba(0,0,0,0);
@@ -107,6 +113,38 @@ h1, h2, h3, h4, h5, h6, p, label, span, div {
 .stSlider > div > div > div > div {
     background: #FF7A1A;
 }
+/* SELECTBOX BACKGROUND */
+div[data-baseweb="select"] > div {
+    background-color: #EDEFF2 !important;
+    border-radius: 18px !important;
+}
+
+/* SELECTED TEXT INSIDE BOX */
+div[data-baseweb="select"] span {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+
+/* DROPDOWN ARROW */
+div[data-baseweb="select"] svg {
+    fill: black !important;
+}
+
+/* DROPDOWN MENU */
+ul[role="listbox"] {
+    background-color: white !important;
+}
+
+/* DROPDOWN OPTIONS */
+ul[role="listbox"] li {
+    color: black !important;
+    background-color: white !important;
+}
+
+/* HOVER EFFECT */
+ul[role="listbox"] li:hover {
+    background-color: #E8EEF7 !important;
+}
 
 div[data-testid="stMetric"] {
     background: rgba(3, 18, 35, 0.82);
@@ -118,7 +156,6 @@ div[data-testid="stMetric"] {
 hr {
     border-color: rgba(255,255,255,0.15);
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -217,11 +254,18 @@ with left:
     )
 
     operating_hours = st.slider(
-        "Operating Hours",
+        "Operating Hours Per Day",
         min_value=1,
         max_value=24,
         value=8
     )
+
+    calculation_basis = st.radio(
+    "Calculation Basis",
+    ["Per Day", "Per Month", "Per Year"],
+    horizontal=True,
+    index=2
+)
 
     electricity_tariff = st.number_input(
         "Electricity Tariff (OMR/kWh)",
@@ -260,10 +304,19 @@ else:
     useful_heat_mw = available_heat_mw
     adjusted_temp = molten_salt_temp
 
-electricity_saved_mwh = useful_heat_mw * operating_hours
-electricity_saved_kwh = electricity_saved_mwh * 1000
+if calculation_basis == "Per Day":
+    total_hours = operating_hours
+    basis_label = "day"
+elif calculation_basis == "Per Month":
+    total_hours = operating_hours * 30
+    basis_label = "month"
+else:
+    total_hours = operating_hours * 365
+    basis_label = "year"
+
+electricity_saved_kwh = useful_heat_mw * 1000 * total_hours
 cost_saved_omr = electricity_saved_kwh * electricity_tariff
-co2_avoided = electricity_saved_mwh * grid_emission_factor
+co2_avoided = (electricity_saved_kwh / 1000) * grid_emission_factor
 
 feasible = adjusted_temp >= required_temp
 temperature_margin = adjusted_temp - required_temp
@@ -354,8 +407,8 @@ with right:
             st.markdown(f"""
             <div class="card">
                 <div class="metric-label">ELECTRICITY SAVED</div>
-                <div class="metric-value blue">{electricity_saved_mwh:.2f}</div>
-                <div class="blue">MWh</div>
+                <div class="metric-value blue">{electricity_saved_kwh:,.0f}</div>
+                <div class="blue">kWh / {basis_label}</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -364,8 +417,8 @@ with right:
             st.markdown(f"""
             <div class="card">
                 <div class="metric-label">ESTIMATED COST SAVED</div>
-                <div class="metric-value orange">{cost_saved_omr:.2f}</div>
-                <div class="orange">OMR</div>
+                <div class="metric-value orange">{cost_saved_omr:,.2f}</div>
+                <div class="orange">OMR / {basis_label}</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -374,8 +427,8 @@ with right:
             st.markdown(f"""
             <div class="card">
                 <div class="metric-label">ESTIMATED CO₂ AVOIDED</div>
-                <div class="metric-value green">{co2_avoided:.2f}</div>
-                <div class="green">tCO₂</div>
+                <div class="metric-value green">{co2_avoided:,.2f}</div>
+                <div class="green">tCO₂ / {basis_label}</div>
             </div>
             """, unsafe_allow_html=True)
 
