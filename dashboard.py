@@ -17,12 +17,6 @@ st.markdown("""
     background: linear-gradient(135deg, #061526 0%, #0A2342 55%, #102B4E 100%);
     color: white;
 }
-div[data-baseweb="select"] > div {
-    color: black !important;
-}
-div[data-baseweb="select"] span {
-    color: black !important;
-}
 
 [data-testid="stHeader"] {
     background: rgba(0,0,0,0);
@@ -112,38 +106,6 @@ h1, h2, h3, h4, h5, h6, p, label, span, div {
 
 .stSlider > div > div > div > div {
     background: #FF7A1A;
-}
-/* SELECTBOX BACKGROUND */
-div[data-baseweb="select"] > div {
-    background-color: #EDEFF2 !important;
-    border-radius: 18px !important;
-}
-
-/* SELECTED TEXT INSIDE BOX */
-div[data-baseweb="select"] span {
-    color: #000000 !important;
-    font-weight: 500 !important;
-}
-
-/* DROPDOWN ARROW */
-div[data-baseweb="select"] svg {
-    fill: black !important;
-}
-
-/* DROPDOWN MENU */
-ul[role="listbox"] {
-    background-color: white !important;
-}
-
-/* DROPDOWN OPTIONS */
-ul[role="listbox"] li {
-    color: black !important;
-    background-color: white !important;
-}
-
-/* HOVER EFFECT */
-ul[role="listbox"] li:hover {
-    background-color: #E8EEF7 !important;
 }
 
 div[data-testid="stMetric"] {
@@ -246,6 +208,30 @@ with left:
         step=5
     )
 
+    molten_salt_inlet_temp = st.slider(
+        "Molten Salt Inlet Temperature (°C)",
+        min_value=100,
+        max_value=500,
+        value=250,
+        step=10
+    )
+
+    mass_flow_rate = st.slider(
+        "Molten Salt Mass Flow Rate (kg/s)",
+        min_value=1,
+        max_value=100,
+        value=10,
+        step=1
+    )
+
+    cp_molten_salt = st.slider(
+        "Molten Salt Cp (kJ/kg·°C)",
+        min_value=1.0,
+        max_value=3.0,
+        value=1.5,
+        step=0.1
+    )
+
     operating_hours = st.slider(
         "Operating Hours Per Day",
         min_value=1,
@@ -254,11 +240,11 @@ with left:
     )
 
     calculation_basis = st.radio(
-    "Calculation Basis",
-    ["Per Day", "Per Month", "Per Year"],
-    horizontal=True,
-    index=2
-)
+        "Calculation Basis",
+        ["Per Day", "Per Month", "Per Year"],
+        horizontal=True,
+        index=2
+    )
 
     electricity_tariff = st.number_input(
         "Electricity Tariff (OMR/kWh)",
@@ -288,14 +274,19 @@ with left:
 
 molten_salt_temp = temperature_data[flare_temp]
 
-available_heat_mw = flare_temp * 0.01
-
 if include_losses:
-    useful_heat_mw = available_heat_mw * (1 - loss_percent / 100)
     adjusted_temp = molten_salt_temp * (1 - loss_percent / 100)
 else:
-    useful_heat_mw = available_heat_mw
     adjusted_temp = molten_salt_temp
+
+delta_t = adjusted_temp - molten_salt_inlet_temp
+
+if delta_t > 0:
+    useful_heat_kw = mass_flow_rate * cp_molten_salt * delta_t
+    useful_heat_mw = useful_heat_kw / 1000
+else:
+    useful_heat_kw = 0
+    useful_heat_mw = 0
 
 if calculation_basis == "Per Day":
     total_hours = operating_hours
@@ -441,6 +432,11 @@ with right:
                 <div><b>WHTU</b><br><span class="orange">{useful_heat_mw:.2f} MW</span></div>
                 <div><b>Molten Salt</b><br><span class="blue">{adjusted_temp:.1f} °C</span></div>
                 <div><b>Pyrolysis</b><br><span class="orange">{required_temp} °C</span></div>
+            </div>
+            <br>
+            <div style="font-size:14px;">
+                <b>Heat equation used:</b> Q = ṁ × Cp × ΔT<br>
+                ṁ = {mass_flow_rate} kg/s, Cp = {cp_molten_salt:.1f} kJ/kg·°C, ΔT = {delta_t:.1f} °C
             </div>
         </div>
         """, unsafe_allow_html=True)
