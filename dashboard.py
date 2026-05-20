@@ -181,32 +181,25 @@ temperature_data = {
 # HEADER
 # =========================
 
-col_logo1, col_title, col_logo2 = st.columns([1.2, 3.2, 1.2])
+top_left, top_center, top_right = st.columns([1, 6, 1])
 
-with col_logo1:
-    st.markdown("""
-    <div style="font-size:24px;font-weight:800;color:#FF1744;">
-        ICEM
-    </div>
-    <div style="font-size:17px;color:#FF1744;">
-        International College of<br>Engineering & Management
-    </div>
-    """, unsafe_allow_html=True)
+with top_left:
+    st.image("icem_logo.png", width=500)
 
-with col_title:
-    st.markdown("""
-    <div class="yellow-text">MP3995 - Final Year Project</div>
-    <div class="main-title">
-    THERMAL FEASIBILITY EVALUATION OF WASTE HEAT TRANSFER FROM FLARING SYSTEMS TO PYROLYSIS REACTORS
-    </div>
-    """, unsafe_allow_html=True)
+with top_center:
+    st.empty()
 
-with col_logo2:
-    st.markdown("""
-    <div style="font-size:24px;font-weight:800;color:#1399D6;text-align:right;">
-        University of<br>Lancashire
-    </div>
-    """, unsafe_allow_html=True)
+with top_right:
+    st.image("uclan_logo.png", width=500)
+
+st.write("")
+
+st.markdown("""
+<div class="yellow-text">MP3995 - Final Year Project</div>
+<div class="main-title">
+THERMAL FEASIBILITY EVALUATION OF WASTE HEAT TRANSFER FROM FLARING SYSTEMS TO PYROLYSIS REACTORS
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 <div class="info-strip">
